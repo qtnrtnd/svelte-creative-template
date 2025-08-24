@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+
+@source inline('hidden');
+
+@keyframes translate-half-x-left {
+	to {
+		transform: translateX(-50%);
+	}
+}
