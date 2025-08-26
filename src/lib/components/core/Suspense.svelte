@@ -15,9 +15,13 @@
 		ondestroy,
 		...options
 	}: {
+		/** The content to be rendered, which can interact with the provided suspense context. */
 		children: Snippet<[ComponentSuspense]>;
+		/** A callback function that is executed when all suspense conditions are met and the content is revealed. */
 		onreveal?: () => HookCleaner;
+		/** A callback function that is executed when the component enters a suspended state. */
 		onsuspend?: () => HookCleaner;
+		/** A callback function that is executed when the component is destroyed. */
 		ondestroy?: () => void;
 	} & SuspenseContextOptions = $props();
 

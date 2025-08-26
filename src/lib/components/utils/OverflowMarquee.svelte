@@ -11,10 +11,13 @@
 		separator,
 		...props
 	}: {
+		/** The content to be displayed in the marquee. */
 		children: Snippet;
+		/** An optional snippet to render as a separator between repeated content. */
 		separator?: Snippet;
-		// text: string | string[];
+		/** The speed of the marquee animation in pixels per second. */
 		speed?: number;
+		/** The gap between repeated content items. */
 		gap?: string;
 	} & HTMLAttributes<HTMLElement> = $props();
 

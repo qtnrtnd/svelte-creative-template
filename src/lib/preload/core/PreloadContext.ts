@@ -2,12 +2,23 @@ import { fromClient } from '$lib/helpers';
 import { onResize } from '$lib/hooks';
 import { onDestroy } from 'svelte';
 
+/**
+ * The parameters required to preload an image, including the default `src`,
+ * optional responsive `sources`, and `sizes` attributes.
+ * @internal
+ */
 type ImagePreloadParams = [
 	src: string,
 	sources?: Record<string, string> | null,
 	sizes?: string | null
 ];
 
+/**
+ * An internal entry representing a preloaded image, containing its parameters,
+ * the `<picture>` element used for preloading, the promise, associated components,
+ * and its resolved state.
+ * @internal
+ */
 type PreloadedImageEntry = {
 	params: ImagePreloadParams;
 	element: HTMLPictureElement;
@@ -16,10 +27,24 @@ type PreloadedImageEntry = {
 	resolved: boolean;
 };
 
+/**
+ * The public interface for a component-specific preload context, allowing components
+ * to preload images and check their status.
+ */
 export type ComponentPreload = Public<PreloadContext> & {
+	/**
+	 * Initiates the preload of an image.
+	 * @param params - The image source, sources, and sizes.
+	 * @returns A promise that resolves when the image is loaded and decoded.
+	 */
 	preloadImage: (...params: ImagePreloadParams) => Promise<void>;
 };
 
+/**
+ * Manages the preloading of assets, primarily images, to improve performance
+ * by loading them before they are needed. It creates a hidden `<picture>` element
+ * to trigger the browser's preload mechanism and tracks the loading status.
+ */
 export class PreloadContext {
 	private _preloadedImages = new Map<string, PreloadedImageEntry>();
 	private _rootEl = fromClient(() => document.getElementById('root') ?? document.body);
@@ -30,6 +55,14 @@ export class PreloadContext {
 		});
 	}
 
+	/**
+	 * Extends the global `PreloadContext` to provide a component-specific interface.
+	 * This allows tracking which components are using which preloaded images, so that
+	 * resources can be managed efficiently.
+	 *
+	 * @param context - The global `PreloadContext` instance.
+	 * @returns A `ComponentPreload` object with methods scoped to the component.
+	 */
 	static extend(context: PreloadContext): ComponentPreload {
 		const componentId = Symbol();
 		const componentQueries = new Set<string>();
@@ -50,12 +83,23 @@ export class PreloadContext {
 		};
 	}
 
+	/**
+	 * Checks if a specific image has already been preloaded and resolved.
+	 *
+	 * @param params - The parameters of the image to check.
+	 * @returns `true` if the image is preloaded, `false` otherwise.
+	 */
 	imagePreloaded = (...params: ImagePreloadParams): boolean => {
 		const query = this._getImageQuery(...params);
 		const entry = this._preloadedImages.get(query);
 		return !!entry && entry.resolved;
 	};
 
+	/**
+	 * Handles window resize events by re-evaluating and potentially re-preloading
+	 * images to ensure the correct responsive variant is loaded.
+	 * @internal
+	 */
 	private _handleResize() {
 		for (const [query, entry] of this._preloadedImages.entries()) {
 			if (entry.components.size > 0) {
@@ -75,6 +119,10 @@ export class PreloadContext {
 		}
 	}
 
+	/**
+	 * Generates a unique query string for an image based on its sources and sizes.
+	 * @internal
+	 */
 	private _getImageQuery(...[src, sources, sizes]: ImagePreloadParams): string {
 		const parts: string[] = [src];
 
@@ -89,6 +137,10 @@ export class PreloadContext {
 		return parts.join(',');
 	}
 
+	/**
+	 * Creates the `<picture>` element and the promise for preloading an image.
+	 * @internal
+	 */
 	private _createImagePreload(...[src, sources, sizes]: ImagePreloadParams): {
 		element: HTMLPictureElement;
 		promise: Promise<void>;
@@ -131,6 +183,10 @@ export class PreloadContext {
 		return { element: picture, promise };
 	}
 
+	/**
+	 * Attaches `then` and `catch` handlers to the preload promise.
+	 * @internal
+	 */
 	private _attachPromiseHandlers(entry: PreloadedImageEntry, query: string) {
 		entry.promise
 			.then(() => {
@@ -146,6 +202,10 @@ export class PreloadContext {
 			});
 	}
 
+	/**
+	 * Registers an image for preloading, associating it with a component.
+	 * @internal
+	 */
 	private _registerImage(componentId: symbol, params: ImagePreloadParams): Promise<void> {
 		const query = this._getImageQuery(...params);
 		let entry = this._preloadedImages.get(query);
@@ -169,6 +229,10 @@ export class PreloadContext {
 		return entry.promise;
 	}
 
+	/**
+	 * Unregisters an image from a component, cleaning up if no other components are using it.
+	 * @internal
+	 */
 	private _unregisterImage(componentId: symbol, query: string): void {
 		const entry = this._preloadedImages.get(query);
 		if (!entry) return;

@@ -1,11 +1,12 @@
 <script module lang="ts">
 	import { beforeNavigate } from '$app/navigation';
-	import { onScroll } from '$lib/hooks';
+	import { beforeRefresh, onRefresh, onScroll } from '$lib/hooks';
 	import { createLayoutContext, useLayout } from '$lib/layout';
 	import { createPreloadContext } from '$lib/preload';
 	import { createScrollerContext } from '$lib/scroller';
 	import { createAppContext, createInterfaceContext, useApp } from '$lib/states';
 	import { createSuspenseContext } from '$lib/suspense';
+	import { ScrollTrigger } from '$lib/gsap';
 
 	export const setupTemplate = () => {
 		const { scrollPaused, swapping } = createAppContext();
@@ -27,6 +28,16 @@
 			scroller.paused(scrollPaused());
 		});
 
+		onMount(() => {
+			ScrollTrigger.addEventListener('refreshInit', beforeRefresh.dispatch);
+			ScrollTrigger.addEventListener('refresh', onRefresh.dispatch);
+
+			return () => {
+				ScrollTrigger.removeEventListener('refreshInit', beforeRefresh.dispatch);
+				ScrollTrigger.removeEventListener('refresh', onRefresh.dispatch);
+			};
+		});
+
 		beforeNavigate(({ cancel }) => {
 			if (swapping()) cancel();
 		});
@@ -42,23 +53,25 @@
 	import favicon32 from '$lib/assets/favicon.png?width=32&string';
 	import favicon48 from '$lib/assets/favicon.png?width=48&string';
 	import favicon180 from '$lib/assets/favicon.png?width=180&string';
-	import type { Snippet } from 'svelte';
+	import { onMount, type Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import { page } from '$app/state';
 	import Page from './Page.svelte';
 
 	const {
-		page: _page,
+		children,
 		fixed,
-		beforePage,
-		afterPage,
+		adjacent,
 		key = ((page.error && page.error.path) || page.route.id || '') + page.status,
 		...props
 	}: {
-		page: Snippet;
+		/** The content of the current page to be rendered within the layout. */
+		children: Snippet;
+		/** Snippet used for fixed content, rendered outside the main scrolling area. */
 		fixed?: Snippet;
-		beforePage?: Snippet;
-		afterPage?: Snippet;
+		/** Snippet used for page-adjacent content, rendered inside the main scrolling area but outside the page content. */
+		adjacent?: Snippet;
+		/** A unique key to trigger page transitions. Defaults to the current route ID. */
 		key?: unknown;
 	} & HTMLAttributes<HTMLElement> = $props();
 
@@ -88,19 +101,18 @@
 	{...props}
 	class={mergeCls(['w-full overflow-clip', { 'pointer-events-none': frozen() }], props.class)}
 >
-	<main>
-		<div id="smooth-wrapper">
-			<div id="smooth-content">
-				{@render beforePage?.()}
+	<div id="smooth-wrapper">
+		<div id="smooth-content">
+			<main>
 				{#key key}
 					<Page>
-						{@render _page()}
+						{@render children()}
 					</Page>
 				{/key}
-				{@render afterPage?.()}
-			</div>
+			</main>
+			{@render adjacent?.()}
 		</div>
-	</main>
+	</div>
 	{@render fixed?.()}
 	{#each layout.fixed as snippet}
 		{@render snippet()}

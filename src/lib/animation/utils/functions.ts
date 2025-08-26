@@ -1,15 +1,19 @@
 import type { TransitionConfig } from 'svelte/transition';
+import { toCamel } from '$lib/helpers';
 import type {
 	SvelteTransitionDirection,
 	SvelteTransitionFunction,
 	SvelteTransitionOptions
 } from './types';
-import { toCamel } from '$lib/helpers';
 
 /**
- * Factory function for creating Svelte transitions with a fluent API
- * @template Node - Element type the transition applies to
- * @template Return - Return type (TransitionConfig or function returning TransitionConfig)
+ * Defines a factory for creating Svelte transitions with a fluent and composable API.
+ * This allows for defining reusable transition logic that can be easily configured.
+ *
+ * @template Node - The type of the HTML element to which the transition applies.
+ * @template Return - The return type, which can be a `TransitionConfig` or a function that returns one.
+ * @param t - A function that takes a Svelte transition function and its parameters, and returns the configured transition.
+ * @returns The result of the transition factory, either a `TransitionConfig` or a function returning it.
  */
 export type SvelteTransitionFactory<
 	Node extends Element = Element,
@@ -22,11 +26,13 @@ export type SvelteTransitionFactory<
 ) => Return;
 
 /**
- * Calculates the distance between two elements
- * @param el1 - First element
- * @param el2 - Second element
- * @param mode - Calculation mode: 'center' for center-to-center, 'edges' for edge-to-edge
- * @returns Distance in pixels
+ * Calculates the geometric distance between two HTML elements.
+ *
+ * @param el1 - The first HTML element.
+ * @param el2 - The second HTML element.
+ * @param mode - The calculation mode: 'center' for center-point to center-point distance,
+ *               or 'edges' for the distance between the nearest edges of the elements.
+ * @returns The distance between the two elements in pixels.
  */
 export const getDistance = (
 	el1: Element,
@@ -50,11 +56,13 @@ export const getDistance = (
 };
 
 /**
- * Distributes a value across a specified count with optional easing
- * @param count - Number of values to generate
- * @param value - Base value to distribute
- * @param ease - Easing function to apply (defaults to linear)
- * @returns Array of distributed values
+ * Distributes a given value across a specified number of steps, with an optional easing function.
+ * This is useful for creating staggered animations.
+ *
+ * @param count - The number of values to generate.
+ * @param value - The base value to be distributed.
+ * @param ease - An optional easing function to apply to the distribution. Defaults to linear.
+ * @returns An array of numbers representing the distributed values.
  */
 export const distribute = (
 	count: number,
@@ -72,21 +80,25 @@ export const distribute = (
 };
 
 /**
- * Interpolates a value based on a ratio and multiplier
- * @param value - Base value
- * @param multiply - Multiplier for the final value
- * @param ratio - Interpolation ratio (0-1)
- * @returns Interpolated value
+ * Interpolates a value based on a given ratio and a multiplier.
+ * This can be used to scale a value proportionally.
+ *
+ * @param value - The base value to be interpolated.
+ * @param multiply - The multiplier to apply to the value.
+ * @param ratio - The interpolation ratio, typically between 0 and 1.
+ * @returns The interpolated value.
  */
 export const fromRatio = (value: number, multiply: number, ratio: number) => {
 	return value * (1 + (multiply - 1) * ratio);
 };
 
 /**
- * Resolves transition direction based on element state and provided direction
- * @param node - Element to check
- * @param direction - Requested transition direction
- * @returns Resolved direction ('in' or 'out')
+ * Resolves the direction of a Svelte transition ('in' or 'out') based on the element's state
+ * and the provided direction, which can be 'in', 'out', or 'both'.
+ *
+ * @param node - The HTML element undergoing the transition.
+ * @param direction - The requested transition direction.
+ * @returns The resolved direction, either 'in' or 'out'.
  */
 export const resolveDirection = (
 	node: Element,
@@ -99,9 +111,11 @@ export const resolveDirection = (
 };
 
 /**
- * Converts a CSS style string to a keyframe object with camelCase properties
- * @param style - CSS style string (e.g., "opacity: 0; transform: scale(0.5)")
- * @returns Object with camelCase CSS properties
+ * Converts a CSS style string into a keyframe object suitable for use with GSAP or other
+ * animation libraries. It transforms CSS property names to camelCase.
+ *
+ * @param style - A CSS style string (e.g., "opacity: 0; transform: scale(0.5)").
+ * @returns An object where keys are camelCased CSS properties and values are their corresponding values.
  */
 export const toKeyframe = (style: string): Record<string, string> => {
 	return Object.fromEntries(
@@ -116,11 +130,15 @@ export const toKeyframe = (style: string): Record<string, string> => {
 };
 
 /**
- * Resolves a transition factory by providing it with a transition function executor
- * @param node - Element to apply transition to
- * @param factory - Transition factory function
- * @param options - Svelte transition options
- * @returns Resolved transition result
+ * Resolves a `SvelteTransitionFactory` by executing it with the provided node and options.
+ * This function acts as a bridge between the factory pattern and the actual Svelte transition execution.
+ *
+ * @template Node - The type of the HTML element.
+ * @template Return - The expected return type from the factory.
+ * @param node - The HTML element to apply the transition to.
+ * @param factory - The transition factory function to be resolved.
+ * @param options - The Svelte transition options.
+ * @returns The result of the resolved transition.
  */
 export const resolveTransition = <
 	Node extends Element,

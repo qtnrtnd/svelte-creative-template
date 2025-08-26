@@ -9,7 +9,12 @@
 		children,
 		node = $bindable(),
 		...props
-	}: { children: Snippet; node?: HTMLAnchorElement } & HTMLAnchorAttributes = $props();
+	}: {
+		/** The content of the anchor tag. */
+		children: Snippet;
+		/** A bindable reference to the underlying `<a>` element. */
+		node?: HTMLAnchorElement;
+	} & HTMLAnchorAttributes = $props();
 
 	const { frozen } = useApp();
 

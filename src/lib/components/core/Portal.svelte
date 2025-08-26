@@ -8,8 +8,11 @@
 		onmount,
 		onunmount
 	}: {
+		/** The content to be rendered within the portal. */
 		children: Snippet<[PortalContext]>;
+		/** A callback function that is executed when the portal's content is mounted. */
 		onmount?: (snippet: Snippet) => void;
+		/** A callback function that is executed when the portal's content is unmounted. */
 		onunmount?: (snippet: Snippet) => void;
 	} = $props();
 

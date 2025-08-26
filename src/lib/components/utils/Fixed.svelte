@@ -4,7 +4,10 @@
 	import Portal from '../core/Portal.svelte';
 	import type { PortalContext } from '$lib/portal';
 
-	const { children: _children }: { children: Snippet<[PortalContext]> } = $props();
+	const { children: _children }: {
+		/** The content to be rendered in a fixed position. */
+		children: Snippet<[PortalContext]>;
+	} = $props();
 
 	const layout = useLayout();
 

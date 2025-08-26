@@ -5,68 +5,183 @@ import { resolveDirection, toKeyframe } from '../utils/functions';
 import type { SvelteTransitionDirection, SvelteTransitionFunction } from '../utils/types';
 import { linear } from 'svelte/easing';
 
+/**
+ * Defines how to attach an element to a transition.
+ * It can be an Element, a CSS selector string, or a function that returns an Element.
+ */
 type Attach = (() => Element | undefined) | Element | string;
 
+/**
+ * The type of a tween transition.
+ * - `idle`: A transition to a specific state without animation.
+ * - `intro`: An "in" transition.
+ * - `outro`: An "out" transition.
+ */
 type TweenTransitionType = 'idle' | 'intro' | 'outro';
 
+/**
+ * Represents the direction of a tween-based transition.
+ * It can be either 'in' for intros or 'out' for outros.
+ */
 export type TweenTransitionDirection = Exclude<SvelteTransitionDirection, 'both'>;
 
-type TweenTransitionBaseParams<UserData extends object = object> = {
+type TweenTransitionBaseParams<UserData extends object> = {
+	/**
+	 * The element to which the transition is attached. This can be an `Element` instance,
+	 * a CSS selector string, or a function that returns an `Element`. It is used for
+	 * GSAP context scoping, event dispatching, and transition validation.
+	 */
 	attach?: Attach;
+	/**
+	 * When `true`, the transition's state is not updated, events are not dispatched,
+	 * and pointer events are not managed. This effectively makes the transition inert.
+	 */
 	ignore?: boolean;
+	/**
+	 * An object containing custom data to be passed to the underlying transition function.
+	 * This allows for creating highly configurable and reusable transitions.
+	 */
 	data?: Partial<UserData>;
 };
 
+/**
+ * Defines the configuration parameters for a tween-based transition.
+ * @template UserData - A generic type for custom data that can be passed to the transition logic.
+ */
 export type TweenTransitionParams<UserData extends object = object> =
 	TweenTransitionBaseParams<UserData> & {
+		/**
+		 * If `true`, the transition will dispatch `introstart`/`introend` or `outrostart`/`outroend`
+		 * custom events on the attached element, allowing for external logic to react to transition lifecycle.
+		 */
 		dispatchEvents?: boolean;
+		/**
+		 * If `true`, the transition completes instantly without any animation.
+		 */
 		instant?: boolean;
+		/**
+		 * When set, the transition will only execute if the attached element is within the viewport.
+		 * A `boolean` value checks for any visibility, while a `number` (0-1) specifies the required
+		 * visibility ratio.
+		 */
 		inViewport?: boolean | number;
-		overlapStrategy?: 'abort' | 'invalidate' | 'restart' | 'add';
+		/**
+		 * Determines the behavior when a new transition is triggered in the same direction as an ongoing one.
+		 * - `prevent`: Ignores the new transition and allows the current one to complete.
+		 * - `invalidate`: Reverts the current transition and starts the new one from the same progress point.
+		 * - `restart`: Reverts the current transition and starts the new one from the beginning.
+		 * - `add`: Allows the new transition to run concurrently with the existing one.
+		 */
+		overlapStrategy?: 'prevent' | 'invalidate' | 'restart' | 'add';
+		/**
+		 * If `true`, any previously running animation on the same element will be killed before
+		 * the new transition starts, preventing conflicting animations.
+		 */
 		overwrite?: boolean;
 	};
 
-type TweenTransitionIdleParams<UserData extends object = object> =
-	TweenTransitionBaseParams<UserData> & {
-		direction?: TweenTransitionDirection;
-	};
+type TweenTransitionIdleParams<UserData extends object> = TweenTransitionBaseParams<UserData> & {
+	/**
+	 * The direction for the idle transition, either 'in' or 'out'.
+	 */
+	direction?: TweenTransitionDirection;
+};
 
-type TweenTransitionOptions<UserData extends object = object> = {
+type TweenTransitionOptions<UserData extends object> = {
+	/**
+	 * Default parameters to apply to idle transitions.
+	 */
 	idle?: TweenTransitionIdleParams<UserData>;
+	/**
+	 * Default parameters to apply to intro transitions.
+	 */
 	intro?: TweenTransitionParams<UserData>;
+	/**
+	 * Default parameters to apply to outro transitions.
+	 */
 	outro?: TweenTransitionParams<UserData>;
+	/**
+	 * If `true`, all transitions created by this instance will be bypassed,
+	 * effectively disabling them.
+	 */
 	bypass?: boolean;
 } & TweenTransitionParams<UserData>;
 
-type ResolvedTweenTransitionParams<UserData extends object = object> = Omit<
+type ResolvedTweenTransitionParams<UserData extends object> = Omit<
 	Required<TweenTransitionParams<UserData>>,
 	'attach'
 > & {
+	/**
+	 * The resolved HTML element attached to the transition.
+	 */
 	attach: Element | null;
+	/**
+	 * Indicates whether the transition is currently being bypassed.
+	 */
 	bypass: boolean;
 };
 
-export type TweenTransitionFunctionParams<UserData extends object = object> = {
-	last: {
-		animation: gsap.core.Animation | null;
-		params: ResolvedTweenTransitionParams<UserData> | null;
-	};
+type TweenTransitionRecord<UserData extends object> = {
+	/**
+	 * The underlying GSAP animation instance for the transition.
+	 */
+	animation: gsap.core.Animation | null;
+	/**
+	 * The direction of the transition ('in' or 'out').
+	 */
 	direction: TweenTransitionDirection;
+	/**
+	 * The type of the transition ('idle', 'intro', or 'outro').
+	 */
 	type: TweenTransitionType;
+	/**
+	 * The starting progress ratio of the transition (0-1). This is used to handle
+	 * overlapping transitions smoothly.
+	 */
 	ratio: number;
+	/**
+	 * The resolved parameters for the transition.
+	 */
 	params: ResolvedTweenTransitionParams<UserData>;
 };
 
+/**
+ * Defines the parameters passed to the `TweenTransitionFunction`.
+ * @template UserData - A generic type for custom data.
+ */
+export type TweenTransitionFunctionParams<UserData extends object = object> = Omit<
+	TweenTransitionRecord<UserData>,
+	'animation'
+> & {
+	/**
+	 * A snapshot of the last transition record, providing context about the previous state.
+	 */
+	last: TweenTransitionRecord<UserData> | null;
+};
+
+/**
+ * Defines the signature for a function that creates a GSAP-based tween transition.
+ * @template UserData - A generic type for custom data.
+ * @param params - The parameters required to create the transition animation.
+ * @returns A GSAP animation instance (`gsap.core.Animation`) or `null`.
+ */
 export type TweenTransitionFunction<UserData extends object = object> = (
 	params: TweenTransitionFunctionParams<UserData>
 ) => gsap.core.Animation | null;
 
+/**
+ * A comprehensive class for creating and managing complex, stateful tween-based transitions
+ * using the GSAP library. It provides fine-grained control over transition behavior,
+ * including lifecycle events, viewport-awareness, and overlapping animations.
+ *
+ * @template UserData - A generic type for a custom data object that can be passed to transitions.
+ */
 export class TweenTransition<UserData extends object = object> {
 	private readonly _transition: TweenTransitionFunction<UserData>;
 	private readonly _options: Readonly<TweenTransitionOptions<UserData>>;
-	private readonly _lastParams: Record<
+	private readonly _records: Record<
 		TweenTransitionDirection,
-		ResolvedTweenTransitionParams<UserData> | null
+		TweenTransitionRecord<UserData> | null
 	> = {
 		in: null,
 		out: null
@@ -82,6 +197,12 @@ export class TweenTransition<UserData extends object = object> {
 		(c) => c.kill()
 	);
 
+	/**
+	 * Constructs a new `TweenTransition` instance.
+	 *
+	 * @param transition - The function that defines the GSAP animation for the transition.
+	 * @param options - Default configuration options for all transitions created by this instance.
+	 */
 	constructor(
 		transition: TweenTransitionFunction<UserData>,
 		options: TweenTransitionOptions<UserData> = {}
@@ -92,6 +213,15 @@ export class TweenTransition<UserData extends object = object> {
 		this._init();
 	}
 
+	/**
+	 * Validates whether a transition should proceed based on its direction and viewport visibility.
+	 * This is a static utility method that can be used externally.
+	 *
+	 * @param node - The HTML element to be transitioned.
+	 * @param direction - The direction of the transition ('in', 'out', or 'both').
+	 * @param inViewport - If specified, checks if the element is within the viewport.
+	 * @returns `true` if the transition is valid and should run, otherwise `false`.
+	 */
 	static validate(
 		node: Element,
 		direction: SvelteTransitionDirection,
@@ -102,6 +232,15 @@ export class TweenTransition<UserData extends object = object> {
 		return !shouldSkipTransition(resolvedDirection, resolvedParams);
 	}
 
+	/**
+	 * Creates a `TweenTransition` instance from a standard Svelte transition function.
+	 * This allows adapting existing Svelte transitions to the `TweenTransition` system.
+	 *
+	 * @template Params - The type of the parameters for the Svelte transition function.
+	 * @param transition - The Svelte transition function to adapt.
+	 * @param options - Configuration options for the new `TweenTransition` instance.
+	 * @returns A new `TweenTransition` instance.
+	 */
 	static from<Params extends object>(
 		transition: SvelteTransitionFunction<Element, Partial<Params>>,
 		options?: TweenTransitionOptions<Params>
@@ -164,6 +303,13 @@ export class TweenTransition<UserData extends object = object> {
 		}, options);
 	}
 
+	/**
+	 * Reverts any active transitions and instantly renders the element in a specified
+	 * direction ('in' or 'out'). This is useful for setting an initial state without animation.
+	 *
+	 * @param params - Parameters for the idle transition.
+	 * @returns The GSAP animation instance created for the idle state, or `null`.
+	 */
 	idle = (params: TweenTransitionIdleParams<UserData> = {}): gsap.core.Animation | null => {
 		return untrack(() => {
 			if (!this._allowIdle) {
@@ -185,6 +331,12 @@ export class TweenTransition<UserData extends object = object> {
 		});
 	};
 
+	/**
+	 * Executes an "in" transition (intro).
+	 *
+	 * @param params - Configuration parameters for the intro transition.
+	 * @returns The GSAP animation instance for the intro, or `null` if the transition is skipped.
+	 */
 	intro = (params: TweenTransitionParams<UserData> = {}): gsap.core.Animation | null => {
 		return untrack(() => {
 			this._handleIdle();
@@ -200,6 +352,12 @@ export class TweenTransition<UserData extends object = object> {
 		});
 	};
 
+	/**
+	 * Executes an "out" transition (outro).
+	 *
+	 * @param params - Configuration parameters for the outro transition.
+	 * @returns The GSAP animation instance for the outro, or `null` if the transition is skipped.
+	 */
 	outro = (params: TweenTransitionParams<UserData> = {}): gsap.core.Animation | null => {
 		return untrack(() => {
 			this._handleIdle();
@@ -215,18 +373,34 @@ export class TweenTransition<UserData extends object = object> {
 		});
 	};
 
+	/**
+	 * Returns the current progress ratio of the active transition (a value between 0 and 1).
+	 *
+	 * @returns The current transition ratio.
+	 */
 	ratio = (): number => {
 		return this._ratio;
 	};
 
+	/**
+	 * Returns the current direction of the active transition ('in', 'out', or `null` if no transition is active).
+	 *
+	 * @returns The current transition direction.
+	 */
 	direction = (): TweenTransitionDirection | null => {
 		return this._direction;
 	};
 
+	/**
+	 * Provides access to the currently active GSAP animation instance.
+	 */
 	get animation(): gsap.core.Animation | null {
 		return this._animation;
 	}
 
+	/**
+	 * Provides access to the initial options configured for this `TweenTransition` instance.
+	 */
 	get options(): Readonly<TweenTransitionOptions<UserData>> {
 		return this._options;
 	}
@@ -268,11 +442,11 @@ export class TweenTransition<UserData extends object = object> {
 			const progress = this._animation.progress();
 
 			if (this._direction === direction) {
-				if (overlapStrategy === 'abort') return null;
+				if (overlapStrategy === 'prevent') return null;
 
 				if (overlapStrategy === 'invalidate') {
 					const lastDirection = this._direction === 'in' ? 'out' : 'in';
-					const { attach, data } = this._lastParams[lastDirection] ?? {};
+					const { params: { data, attach } = {} } = this._records[lastDirection] ?? {};
 
 					this.idle({
 						direction: lastDirection,
@@ -296,13 +470,11 @@ export class TweenTransition<UserData extends object = object> {
 			}
 		}
 
+		const type = idle ? 'idle' : direction === 'in' ? 'intro' : 'outro';
 		const animation = this._context.add(() => {
 			return this._transition({
-				last: {
-					animation: this._animation,
-					params: this._lastParams[direction]
-				},
-				type: idle ? 'idle' : direction === 'in' ? 'intro' : 'outro',
+				last: this._direction && this._records[this._direction],
+				type,
 				direction,
 				ratio,
 				params
@@ -316,7 +488,13 @@ export class TweenTransition<UserData extends object = object> {
 		}
 
 		if (!ignore) {
-			this._lastParams[direction] = params;
+			this._records[direction] = {
+				animation,
+				direction,
+				params,
+				ratio,
+				type
+			};
 
 			if (attach && direction) {
 				this._handlePointerEvents(attach, direction);
@@ -359,7 +537,7 @@ export class TweenTransition<UserData extends object = object> {
 
 const shouldSkipTransition = (
 	direction: TweenTransitionDirection,
-	params: ResolvedTweenTransitionParams
+	params: ResolvedTweenTransitionParams<object>
 ): boolean => {
 	const { instant, bypass, attach, inViewport } = params;
 
@@ -416,7 +594,7 @@ const resolveParams = <UserData extends object>(
 		bypass: resolveDataFlag(attach, 'bypass', direction, options.bypass ?? false),
 		ignore: params.ignore ?? options.ignore ?? false,
 		inViewport: params.inViewport ?? options.inViewport ?? false,
-		overlapStrategy: params.overlapStrategy ?? options.overlapStrategy ?? 'abort',
+		overlapStrategy: params.overlapStrategy ?? options.overlapStrategy ?? 'prevent',
 		overwrite: params.overwrite ?? options.overwrite ?? true,
 		data: { ...options.data, ...params.data }
 	};

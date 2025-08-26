@@ -10,22 +10,16 @@
 
 <Template>
 	{#snippet fixed()}
-		<!-- Fixed elements goes here -->
+        <!-- Snippet used for fixed content, rendered outside the main scrolling area -->
 		<Header />
 	{/snippet}
 
-	{#snippet beforePage()}
-		<!-- Content that should be placed right before page container goes here -->
-	{/snippet}
+    <!-- The content of the current page to be rendered within the layout -->
+	<div class="relative p-4 pt-16">
+		{@render children()}
+	</div>
 
-	{#snippet page()}
-		<!-- Page content goes here -->
-		<div class="relative p-4 pt-12">
-			{@render children()}
-		</div>
-	{/snippet}
-
-	{#snippet afterPage()}
-		<!-- Content that should be placed right after page container goes here -->
+	{#snippet adjacent()}
+        <!-- Snippet used for page-adjacent content, rendered inside the main scrolling area but outside the page content -->
 	{/snippet}
 </Template>

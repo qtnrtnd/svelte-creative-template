@@ -16,6 +16,7 @@
 		children,
 		...props
 	}: {
+		/** The content of the page. */
 		children: Snippet;
 	} = $props();
 
