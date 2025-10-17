@@ -1,10 +1,7 @@
 import { Flip } from 'gsap/Flip';
 import { gsap } from 'gsap';
 import type { TransitionConfig } from 'svelte/transition';
-import {
-	Crossfade,
-	type CrossfadeTransition
-} from '$lib/animation/core/Crossfade';
+import { Crossfade, type CrossfadeTransition } from '$lib/animation/core/Crossfade';
 import {
 	TweenTransitionAdapterConfig,
 	type TweenTransitionAdapterFunction,

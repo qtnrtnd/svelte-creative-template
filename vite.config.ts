@@ -6,6 +6,9 @@ import { imagetools, pictureFormat } from 'vite-imagetools';
 import unplugin from 'unplugin-preprocessor-directives/vite';
 
 export default defineConfig({
+	build: {
+		assetsInlineLimit: 0
+	},
 	plugins: [
 		unplugin(),
 		imagetools({

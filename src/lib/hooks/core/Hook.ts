@@ -39,7 +39,7 @@ type HookOptions<Parameters extends unknown[]> = {
 			validate?: () => boolean;
 			/** If `true`, allows the hook to run during Server-Side Rendering (SSR). */
 			ssr?: boolean;
-	  });
+		});
 
 /**
  * An internal representation of a listener entry within a `Hook`.

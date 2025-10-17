@@ -12,6 +12,7 @@ export class LayoutContext {
 	 * @private
 	 */
 	private _fixed = new SvelteSet<Snippet>();
+	private _renderer = new SvelteSet<Snippet>();
 
 	/**
 	 * Provides read-only access to the reactive set of 'fixed' snippets.
@@ -19,5 +20,9 @@ export class LayoutContext {
 	 */
 	get fixed() {
 		return this._fixed;
+	}
+
+	get renderer() {
+		return this._renderer;
 	}
 }

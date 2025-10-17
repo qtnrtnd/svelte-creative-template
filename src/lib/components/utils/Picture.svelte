@@ -37,19 +37,19 @@
 
 	const isImageReady = () => imgNode.complete && imgNode.naturalWidth > 0;
 
-	const handleImageLoad = () => {
-		imgNode.decode().then(() => {
-			decoded = true;
+	const handleImageLoad = async () => {
+		await imgNode.decode();
 
-			if (fade && !suspended() && ScrollTrigger.isInViewport(pictureNode)) {
-				gsap.to(opacity, {
-					current: 1,
-					...(fade === true ? {} : fade)
-				});
-			} else {
-				opacity.current = 1;
-			}
-		});
+		decoded = true;
+
+		if (fade && !suspended() && ScrollTrigger.isInViewport(pictureNode)) {
+			gsap.to(opacity, {
+				current: 1,
+				...(fade === true ? {} : fade)
+			});
+		} else {
+			opacity.current = 1;
+		}
 	};
 
 	onMount(() => {
@@ -85,7 +85,7 @@
 	{/each}
 	<img
 		bind:this={imgNode}
-		class="block w-full"
+		class="block h-auto w-full"
 		loading="lazy"
 		decoding="async"
 		{...props}

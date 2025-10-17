@@ -201,3 +201,41 @@ export const hyphenateCls = (string: string) => {
 		})
 		.join('');
 };
+
+export const chunkArray = <T>(array: T[], size: number): T[][] =>
+	Array.from({ length: Math.ceil(array.length / size) }, (_, i) =>
+		array.slice(i * size, i * size + size)
+	);
+
+export const chunkByLength = (items: string[], maxLength: number): string[][] => {
+	const result: string[][] = [];
+	let currentChunk: string[] = [];
+	let currentLength = 0;
+
+	for (const item of items) {
+		const itemLength = item.length;
+
+		// If adding this item exceeds the maxLength, start a new chunk
+		if (currentLength + itemLength > maxLength && currentChunk.length > 0) {
+			result.push(currentChunk);
+			currentChunk = [item];
+			currentLength = itemLength;
+		} else {
+			currentChunk.push(item);
+			currentLength += itemLength;
+		}
+	}
+
+	if (currentChunk.length > 0) {
+		result.push(currentChunk);
+	}
+
+	return result;
+};
+
+// export const toSpan = (string: string, options: { className?: string } = {}) => {
+// 	const words = string.split(/\s+/);
+// 	return words
+// 		.map((word, i) => `<span>${word + (i < words.length - 1 ? '&nbsp;' : '')}</span>`)
+// 		.join('');
+// }

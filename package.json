@@ -24,6 +24,7 @@
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@tailwindcss/vite": "^4.0.0",
 		"@types/hyphen": "^1.6.7",
+		"@types/three": "^0.180.0",
 		"eslint": "^9.18.0",
 		"eslint-config-prettier": "^10.0.1",
 		"eslint-plugin-svelte": "^3.0.0",
@@ -43,8 +44,11 @@
 		"wrangler": "^4.23.0"
 	},
 	"dependencies": {
+		"@threlte/core": "^8.1.5",
 		"gsap": "^3.12.7",
 		"hyphen": "^1.10.6",
-		"tailwind-merge": "^3.2.0"
+		"postprocessing": "^6.37.8",
+		"tailwind-merge": "^3.2.0",
+		"three": "^0.180.0"
 	}
 }

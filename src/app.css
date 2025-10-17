@@ -7,3 +7,7 @@
 		transform: translateX(-50%);
 	}
 }
+
+@theme {
+	--font-outfit: 'Outfit', sans-serif;
+}

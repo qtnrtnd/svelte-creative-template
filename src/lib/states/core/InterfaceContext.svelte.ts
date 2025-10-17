@@ -44,8 +44,8 @@ export class InterfaceContext {
 	 */
 	static extend(context: InterfaceContext): ComponentInterface {
 		const extended: ComponentInterface = {
-			swapOffset: context.swapOffset.bind(context),
-            // Component-specific implementation can be added here.
+			swapOffset: context.swapOffset.bind(context)
+			// Component-specific implementation can be added here.
 		};
 
 		onDestroy(() => {

@@ -28,15 +28,10 @@
 	};
 
 	onMount(() => {
-		if (onmount) {
-			onmount(snippet);
-		}
-	});
-
-	onDestroy(() => {
-		if (!unmounted && onunmount) {
-			onunmount(snippet);
-		}
+		if (onmount) onmount(snippet);
+		return () => {
+			if (!unmounted && onunmount) onunmount(snippet);
+		};
 	});
 </script>
 

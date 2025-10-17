@@ -28,7 +28,7 @@
 	// const chunks = $derived(toArray(text));
 </script>
 
-<div {...props} class={mergeCls('overflow-hidden', props.class)} bind:clientWidth={containerWidth}>
+<div {...props} class={mergeCls('overflow-hidden max-w-full', props.class)} bind:clientWidth={containerWidth}>
 	<div
 		class="flex w-max"
 		style:animation-name={overflow ? 'translate-half-x-left' : null}

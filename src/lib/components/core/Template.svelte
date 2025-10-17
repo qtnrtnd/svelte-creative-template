@@ -49,19 +49,23 @@
 	import { debounce, mergeCls } from '$lib/helpers';
 	import { createPortalContext } from '$lib/portal';
 	import { onResize } from '$lib/hooks';
-	import favicon16 from '$lib/assets/favicon.png?width=16&string';
-	import favicon32 from '$lib/assets/favicon.png?width=32&string';
-	import favicon48 from '$lib/assets/favicon.png?width=48&string';
-	import favicon180 from '$lib/assets/favicon.png?width=180&string';
+	import favicon16 from '$lib/assets/favicon.png?w=16&string';
+	import favicon32 from '$lib/assets/favicon.png?w=32&string';
+	import favicon48 from '$lib/assets/favicon.png?w=48&string';
+	import favicon180 from '$lib/assets/favicon.png?w=180&string';
 	import { onMount, type Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 	import { page } from '$app/state';
 	import Page from './Page.svelte';
+	import { Canvas } from '@threlte/core';
+	import GlobalScene from './GlobalScene.svelte';
+	import { LinearToneMapping, WebGPURenderer } from 'three/webgpu';
 
 	const {
 		children,
 		fixed,
 		adjacent,
+		renderer,
 		key = ((page.error && page.error.path) || page.route.id || '') + page.status,
 		...props
 	}: {
@@ -71,6 +75,8 @@
 		fixed?: Snippet;
 		/** Snippet used for page-adjacent content, rendered inside the main scrolling area but outside the page content. */
 		adjacent?: Snippet;
+		/** Snippet to be rendered within the WebGPU renderer. */
+		renderer?: Snippet;
 		/** A unique key to trigger page transitions. Defaults to the current route ID. */
 		key?: unknown;
 	} & HTMLAttributes<HTMLElement> = $props();
@@ -101,6 +107,25 @@
 	{...props}
 	class={mergeCls(['w-full overflow-clip', { 'pointer-events-none': frozen() }], props.class)}
 >
+	<div class="fixed top-0 left-0 h-full w-full">
+		<Canvas
+			createRenderer={(canvas) => {
+				return new WebGPURenderer({
+					canvas,
+					antialias: true,
+					forceWebGL: false
+				});
+			}}
+			toneMapping={LinearToneMapping}
+		>
+			<GlobalScene>
+				{@render renderer?.()}
+				{#each layout.renderer as snippet}
+					{@render snippet()}
+				{/each}
+			</GlobalScene>
+		</Canvas>
+	</div>
 	<div id="smooth-wrapper">
 		<div id="smooth-content">
 			<main>
