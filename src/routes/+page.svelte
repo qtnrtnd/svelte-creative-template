@@ -15,7 +15,6 @@
 		step,
 		saturation
 	} from 'three/tsl';
-	import logo from '$lib/assets/madebyquent.in.svg';
 	import projects from '$lib/data/projects';
 	import Anchor from '$lib/components/utils/Anchor.svelte';
 	import { chunkArray } from '$lib/helpers';
@@ -25,7 +24,6 @@
 	import TextWrap from '$lib/components/utils/WrapText.svelte';
 	import TextSVG from '$lib/components/utils/VectorText.svelte';
 	import creativeSrc from '$lib/assets/creative.svg';
-	import meSrc from '$lib/assets/me.svg';
 	import ideasSrc from '$lib/assets/ideas.svg';
 	import starSrc from '$lib/assets/star.svg';
 	import { fontSizeHeading } from '$lib/style';
